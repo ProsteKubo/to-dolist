@@ -4,10 +4,7 @@
 #include "map.h"
 #include "task.h"
 
-int current_tasklist_length = 2;
-
-char* username;
-char* password;
+int current_task_list_length = 2;
 
 int logged_in = 0;
 
@@ -26,29 +23,83 @@ Command commands [] = {
 };
 
 void add_task() {
-	current_tasklist_length += 1;
+    current_task_list_length += 1;
 
-	tasks = realloc(tasks, current_tasklist_length);
+	tasks = realloc(tasks, current_task_list_length);
 
     if (tasks == NULL) {
         return;
     }
 }
 
+char* create_login_string(char* given_username, char* given_password) {
+    char* login_string = malloc(sizeof(char) + 110);
+    strcpy(login_string, given_username);
+    strcat(login_string, "||");
+    strcat(login_string, given_password);
+
+    return  login_string;
+}
+
 void login() {
-    username = malloc(sizeof(char) * max_character_limit);
-    password = malloc(sizeof(char) * max_character_limit);
+    char* username = malloc(sizeof(char) * max_character_limit);
+    char* password = malloc(sizeof(char) * max_character_limit);
 
     printf("Username: ");
 	scanf("%s", username);
 	printf("\nPassword: ");
 	scanf("%s", password);
-	
-	fileptr = fopen(".\\data.txt", "r+");
+
+	char* login_string = create_login_string(username, password);
+
+	fileptr = fopen(".\\users.txt", "a+");
+
+    if (fileptr == NULL) {
+        // maybe create file later idk
+        return;
+    }
+
+    //get all users
+    // scheme in file username||password
+    char* file_data = malloc(sizeof(char) * 110);
+    while (fgets(file_data, 110, fileptr)) {
+        printf("%s", file_data);
+        if (strcmp(login_string, file_data) == 0) {
+            logged_in = 0;
+            break;
+        }
+    }
+
+    fclose(fileptr);
+    free(file_data);
+    free(username);
+    free(password);
 }
 
 void reg() {
+    char* username = malloc(sizeof(char) * max_character_limit);
+    char* password = malloc(sizeof(char) * max_character_limit);
 
+    printf("Username: ");
+    scanf("%s", username);
+    printf("\nPassword: ");
+    scanf("%s", password);
+
+    char* login_string = create_login_string(username, password);
+
+    fileptr = fopen("users.txt", "a");
+
+    if (fileptr == NULL) {
+        // maybe create file later idk
+        return;
+    }
+
+    fputs(login_string, fileptr);
+
+    fclose(fileptr);
+    free(username);
+    free(password);
+    free(login_string);
 }
 
 int parse_command(char* input) {
@@ -67,7 +118,6 @@ int main() {
 	while (running == 1) {
 		printf("Hello welcom into To-Dolist.\n"
                "If you want to log in write l if you want to register write r and if you need help write h.\n");
-		scanf("%s", current_command_string);
 
 		int current_command = parse_command(current_command_string);
 
@@ -82,14 +132,10 @@ int main() {
         if (current_command == 2) {
             reg();
         }
-
-		printf("%d", current_command);
-	}
+    }
 
     // cleaning up
 	free(current_command_string);
-    free(username);
-    free(password);
     free(fileptr);
     free(tasks);
 
