@@ -8,6 +8,5 @@ include_directories(test)
 
 add_executable(to_dolist
         src/main.c
-        src/map.c
         src/map.h
         src/task.h)
